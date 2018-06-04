@@ -2,6 +2,8 @@ package factories
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 )
 
 const defaultReadDepth int = 10
@@ -17,10 +19,7 @@ type ReadResponse struct {
 type DataReader interface {
 	Source() string
 	Read() <-chan ReadResponse
-}
-
-type blobMD5Factory struct {
-	az azUtil
+	Size() int64
 }
 
 //MD5HashResult TODO
@@ -28,6 +27,7 @@ type MD5HashResult struct {
 	Source string
 	MD5    []byte
 	Err    error
+	Size int64
 }
 
 //NewBlobHashFactory todo
@@ -50,6 +50,58 @@ func NewBlobHashFactory(pattern string, container string, accountName string, ac
 			}
 		}()
 		return blobMD5
+	}
+
+	return md5Hash(factory())
+
+}
+
+//NewFileHashFactory TODO
+func NewFileHashFactory(pattern string) <-chan MD5HashResult {
+	files, err := filepath.Glob(pattern)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	factory := func() <-chan AsyncMD5 {
+		fileMD5 := make(chan AsyncMD5, 1000)
+		go func() {
+			defer close(fileMD5)
+
+			for _, file := range files {
+				fileStat, err := os.Stat(file)
+
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if fileStat.IsDir() {
+					err := filepath.Walk(file, func(path string, f os.FileInfo, err error) error {
+						if err != nil {
+							return err
+						}
+
+						if !f.IsDir() {
+							fullFileName := filepath.Join(path, f.Name())
+
+							fileReader := newFileReader(fullFileName, f.Size())
+							fileMD5 <- *newAsyncMD5(fileReader)
+						}
+
+						return nil
+					})
+
+					if err != nil {
+						log.Fatal(err)
+					}
+					continue
+				}
+
+				fileReader := newFileReader(file, fileStat.Size())
+				fileMD5 <- *newAsyncMD5(fileReader)
+			}
+		}()
+		return fileMD5
 	}
 
 	return md5Hash(factory())

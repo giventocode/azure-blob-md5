@@ -20,6 +20,11 @@ func newAsyncMD5(reader DataReader) *AsyncMD5 {
 }
 
 //Source TODO
+func (a *AsyncMD5) Size() int64 {
+	return a.reader.Size()
+}
+
+//Source TODO
 func (a *AsyncMD5) Source() string {
 	return a.reader.Source()
 }

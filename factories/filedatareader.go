@@ -20,7 +20,10 @@ func newFileReader(fileName string, size int64) *FileReader {
 		size:      size,
 	}
 }
-
+//Size TODO
+func (b *FileReader) Size() int64{
+	return b.size
+}
 //Source TODO
 func (b *FileReader) Source() string {
 	return b.fileName

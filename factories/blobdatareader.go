@@ -24,6 +24,11 @@ func (b *BlobReader) Source() string {
 	return b.blobName
 }
 
+//Size TODO
+func (b *BlobReader) Size() int64 {
+	return b.size
+}
+
 func (b *BlobReader) Read() <-chan ReadResponse {
 	response := make(chan ReadResponse, b.readDepth)
 

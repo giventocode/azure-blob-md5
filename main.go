@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/giventocode/azure-blob-md5/factories"
 	"github.com/giventocode/azure-blob-md5/internal"
@@ -14,20 +15,41 @@ func init() {
 
 func main() {
 
-	if err := internal.Options.Validate(); err != nil {
+	var blobSource bool
+	var fileSource bool
+	var err error
+	var wg sync.WaitGroup
+	if blobSource, fileSource, err = internal.Options.Validate(); err != nil {
 		log.Fatal(err)
 	}
 
-	factory := factories.NewBlobHashFactory(internal.Options.BlobNameOrPrefix,
-		internal.Options.ContainerName,
-		internal.Options.AccountName, 
-		internal.Options.AccountKey)
-
-	for blobHash := range factory {
-
-		if blobHash.Err != nil {
-			log.Fatal(blobHash.Err)
-		}
-		fmt.Printf("%s\t%x\n", blobHash.Source, blobHash.MD5)
+	if blobSource {
+		wg.Add(1)
+		executeFactory("blob", factories.NewBlobHashFactory(internal.Options.BlobNameOrPrefix,
+			internal.Options.ContainerName,
+			internal.Options.AccountName,
+			internal.Options.AccountKey),
+			&wg)
 	}
+
+	if fileSource {
+		wg.Add(1)
+		executeFactory("file", factories.NewFileHashFactory(internal.Options.FileSource),
+			&wg)
+	}
+
+	wg.Wait()
+}
+
+func executeFactory(sourceType string, factory <-chan factories.MD5HashResult, wg *sync.WaitGroup) {
+	go func() {
+		defer wg.Done()
+		for hashFromSource := range factory {
+			if hashFromSource.Err != nil {
+				log.Fatal(hashFromSource.Err)
+			}
+			fmt.Printf("%s\t%s\t%x\t%s\n", hashFromSource.Source, hashFromSource.Size, hashFromSource.MD5, sourceType)
+		}
+		return
+	}()
 }
