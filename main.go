@@ -1,6 +1,7 @@
 package main
 
 import (
+	b64 "encoding/base64"
 	"fmt"
 	"log"
 	"sync"
@@ -57,7 +58,8 @@ func executeFactory(sourceType string, factory <-chan factories.MD5HashResult, w
 			if hashFromSource.Err != nil {
 				log.Fatal(hashFromSource.Err)
 			}
-			fmt.Printf("%s\t%d\t%x\t%s\n", hashFromSource.Source, hashFromSource.Size, hashFromSource.MD5, sourceType)
+			encoded := b64.StdEncoding.EncodeToString(hashFromSource.MD5)
+			fmt.Printf("%s\t%d\t%x\t%s\t%s\n", hashFromSource.Source, hashFromSource.Size, sourceType, hashFromSource.MD5, encoded)
 		}
 		return
 	}()
