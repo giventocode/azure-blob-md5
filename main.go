@@ -57,7 +57,7 @@ func executeFactory(sourceType string, factory <-chan factories.MD5HashResult, w
 			if hashFromSource.Err != nil {
 				log.Fatal(hashFromSource.Err)
 			}
-			fmt.Printf("%s\t%s\t%x\t%s\n", hashFromSource.Source, hashFromSource.Size, hashFromSource.MD5, sourceType)
+			fmt.Printf("%s\t%d\t%x\t%s\n", hashFromSource.Source, hashFromSource.Size, hashFromSource.MD5, sourceType)
 		}
 		return
 	}()
