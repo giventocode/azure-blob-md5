@@ -19,7 +19,15 @@ func main() {
 	var fileSource bool
 	var err error
 	var wg sync.WaitGroup
-	if blobSource, fileSource, err = internal.Options.Validate(); err != nil {
+
+	blobSource, fileSource, err = internal.Options.Validate()
+
+	if internal.Options.ShowVersion {
+		log.Printf("Azure Blob MD5 Tool\n Version:%s", internal.Version)
+		return
+	}
+
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -28,7 +36,8 @@ func main() {
 		executeFactory("blob", factories.NewBlobHashFactory(internal.Options.BlobNameOrPrefix,
 			internal.Options.ContainerName,
 			internal.Options.AccountName,
-			internal.Options.AccountKey),
+			internal.Options.AccountKey,
+			internal.Options.SetBlobMD5),
 			&wg)
 	}
 

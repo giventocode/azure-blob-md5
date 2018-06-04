@@ -12,11 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/giventocode/azure-blob-md5/internal"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
-
 	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
+	"github.com/giventocode/azure-blob-md5/internal"
 )
 
 //azUtil TODO
@@ -82,60 +80,28 @@ func (p *azUtil) downloadRange(blobName string, offset int64, count int64) ([]by
 
 	return data, nil
 }
-func (p *azUtil) blobExists(bburl azblob.BlockBlobURL) (bool, error) {
-	ctx := context.Background()
-	response, err := bburl.GetProperties(ctx, azblob.BlobAccessConditions{})
-
-	if response != nil {
-		defer response.Response().Body.Close()
-		if response.StatusCode() == 200 {
-			return true, nil
-		}
-	}
-
-	storageErr, ok := err.(azblob.StorageError)
-
-	if ok {
-		errResp := storageErr.Response()
-		if errResp != nil {
-			defer errResp.Body.Close()
-			if errResp.StatusCode == 404 {
-				return false, nil
-			}
-		}
-	}
-
-	return false, err
-}
-
-//GetBlobURLWithReadOnlySASToken  TODO
-func (p *azUtil) GetBlobURLWithReadOnlySASToken(blobName string, expTime time.Time) url.URL {
-	bu := p.containerURL.NewBlobURL(blobName)
-	bp := azblob.NewBlobURLParts(bu.URL())
-
-	sas := azblob.BlobSASSignatureValues{BlobName: blobName,
-		ContainerName: bp.ContainerName,
-		ExpiryTime:    expTime,
-		Permissions:   "r"}
-
-	sq := sas.NewSASQueryParameters(p.creds)
-	bp.SAS = sq
-	return bp.URL()
-}
-
-//BlobCallback TODO
-type BlobCallback func(*azblob.Blob, string) (bool, error)
 
 //BlobItemInfo TODO
-type BlobItemInfo struct {
-	Blob azblob.Blob
-	Err  error
+type blobItemInfo struct {
+	blob azblob.Blob
+	err  error
 }
 
-//IterateBlobList TODO
-func (p *azUtil) IterateBlobList(prefix string, chanDepth int) <-chan BlobItemInfo {
+func (p *azUtil) setMD5(blobName string, hash []byte) error {
+	burl := p.containerURL.NewBlobURL(blobName)
+	ctx := context.Background()
 
-	blobs := make(chan BlobItemInfo, chanDepth)
+	response, err := burl.SetHTTPHeaders(ctx, azblob.BlobHTTPHeaders{ContentMD5: hash}, azblob.BlobAccessConditions{})
+
+	if err != nil {
+		return err
+	}
+
+	return response.Response().Body.Close()
+}
+func (p *azUtil) iterateBlobList(prefix string, chanDepth int) <-chan blobItemInfo {
+
+	blobs := make(chan blobItemInfo, chanDepth)
 
 	var marker azblob.Marker
 	options := azblob.ListBlobsSegmentOptions{
@@ -151,11 +117,11 @@ func (p *azUtil) IterateBlobList(prefix string, chanDepth int) <-chan BlobItemIn
 			response, err := p.containerURL.ListBlobsFlatSegment(ctx, marker, options)
 
 			if err != nil {
-				blobs <- BlobItemInfo{Err: err}
+				blobs <- blobItemInfo{err: err}
 				return
 			}
 			for _, blob := range response.Blobs.Blob {
-				blobs <- BlobItemInfo{Blob: blob}
+				blobs <- blobItemInfo{blob: blob}
 			}
 
 			if response.NextMarker.NotDone() {

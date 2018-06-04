@@ -27,11 +27,11 @@ type MD5HashResult struct {
 	Source string
 	MD5    []byte
 	Err    error
-	Size int64
+	Size   int64
 }
 
 //NewBlobHashFactory todo
-func NewBlobHashFactory(pattern string, container string, accountName string, accountKey string) <-chan MD5HashResult {
+func NewBlobHashFactory(pattern string, container string, accountName string, accountKey string, setBlobMD5 bool) <-chan MD5HashResult {
 	az, err := newAzUtil(accountName, accountKey, container, "")
 	if err != nil {
 		log.Fatal(err)
@@ -41,19 +41,25 @@ func NewBlobHashFactory(pattern string, container string, accountName string, ac
 		blobMD5 := make(chan AsyncMD5, 1000)
 		go func() {
 			defer close(blobMD5)
-			for blobItem := range az.IterateBlobList(pattern, 1000) {
-				if blobItem.Err != nil {
-					log.Fatal(blobItem.Err)
+			for blobItem := range az.iterateBlobList(pattern, 1000) {
+				if blobItem.err != nil {
+					log.Fatal(blobItem.err)
 				}
-				blobReader := newBlobReader(blobItem.Blob.Name, *blobItem.Blob.Properties.ContentLength, *az)
+				blobReader := newBlobReader(blobItem.blob.Name, *blobItem.blob.Properties.ContentLength, *az)
 				blobMD5 <- *newAsyncMD5(blobReader)
 			}
 		}()
 		return blobMD5
 	}
 
-	return md5Hash(factory())
+	if setBlobMD5 {
 
+		return md5Hash(factory(), func(md5 []byte, source string) error {
+			return az.setMD5(source, md5)
+		})
+	}
+
+	return md5Hash(factory(), nil)
 }
 
 //NewFileHashFactory TODO
@@ -104,10 +110,10 @@ func NewFileHashFactory(pattern string) <-chan MD5HashResult {
 		return fileMD5
 	}
 
-	return md5Hash(factory())
+	return md5Hash(factory(), nil)
 
 }
-func md5Hash(hashfactory <-chan AsyncMD5) <-chan MD5HashResult {
+func md5Hash(hashfactory <-chan AsyncMD5, resultFunc func(md5 []byte, sourcename string) error) <-chan MD5HashResult {
 	results := make(chan MD5HashResult, defaultHashResultsDepth)
 
 	go func() {
@@ -118,6 +124,13 @@ func md5Hash(hashfactory <-chan AsyncMD5) <-chan MD5HashResult {
 			if err != nil {
 				results <- MD5HashResult{Err: err}
 				return
+			}
+
+			if resultFunc != nil {
+				if err = resultFunc(md5, hashItem.Source()); err != nil {
+					results <- MD5HashResult{Err: err}
+					return
+				}
 			}
 
 			results <- MD5HashResult{MD5: md5, Source: hashItem.Source()}

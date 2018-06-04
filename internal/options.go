@@ -14,6 +14,7 @@ type options struct {
 	AccountKey       string
 	SetBlobMD5       bool
 	FileSource       string
+	ShowVersion      bool
 }
 
 //Options TODO
@@ -22,6 +23,7 @@ var Options = &options{}
 const storageAccountKeyEnvVar = "ACCOUNT_KEY"
 const storageAccountNameEnvVar = "ACCOUNT_NAME"
 
+
 const (
 	blobNameMsg      = "Blob name (e.g. myblob.txt) or prefix."
 	containerNameMsg = "Container name (e.g. mycontainer)."
@@ -29,6 +31,7 @@ const (
 	accountKeyMsg    = "Storage account key string.\n\tCan also be specified via the " + storageAccountKeyEnvVar + " environment variable."
 	setBlobMD5Msg    = "Set Content-MD5 property of the blob with the calculated value"
 	fileSourceMsg    = "File name or pattern. If set, the MD5 hash will be calculated for the files that match the criteria"
+	showVersionMsg   = "Display current version"
 )
 
 func (o *options) Init() {
@@ -40,8 +43,10 @@ func (o *options) Init() {
 		printUsageDefaults("k", "account-key", "", accountKeyMsg)
 		printUsageDefaults("m", "set-blob-md5", "", setBlobMD5Msg)
 		printUsageDefaults("f", "file-source-pattern", "", fileSourceMsg)
+		printUsageDefaults("v", "version", "", showVersionMsg)
 	}
 	flag.BoolVarP(&o.SetBlobMD5, "set-blob-md5", "m", false, setBlobMD5Msg)
+	flag.BoolVarP(&o.ShowVersion, "version", "v", false, showVersionMsg)
 	flag.StringVarP(&o.BlobNameOrPrefix, "blob-name-or-prefix", "b", "", blobNameMsg)
 	flag.StringVarP(&o.ContainerName, "container-name", "c", "", containerNameMsg)
 	flag.StringVarP(&o.AccountName, "account-name", "a", os.Getenv(storageAccountNameEnvVar), accountNameMsg)
