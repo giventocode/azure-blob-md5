@@ -59,7 +59,7 @@ func executeFactory(sourceType string, factory <-chan factories.MD5HashResult, w
 				log.Fatal(hashFromSource.Err)
 			}
 			encoded := b64.StdEncoding.EncodeToString(hashFromSource.MD5)
-			fmt.Printf("%s\t%d\t%x\t%s\t%s\n", hashFromSource.Source, hashFromSource.Size, sourceType, hashFromSource.MD5, encoded)
+			fmt.Printf("%s\t%d\t%s\t%x\t%s\n", hashFromSource.Source, hashFromSource.Size, sourceType, hashFromSource.MD5, encoded)
 		}
 		return
 	}()
