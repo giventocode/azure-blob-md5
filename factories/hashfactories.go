@@ -133,7 +133,7 @@ func md5Hash(hashfactory <-chan AsyncMD5, resultFunc func(md5 []byte, sourcename
 				}
 			}
 
-			results <- MD5HashResult{MD5: md5, Source: hashItem.Source()}
+			results <- MD5HashResult{MD5: md5, Source: hashItem.Source(), Size: hashItem.Size()}
 		}
 	}()
 
