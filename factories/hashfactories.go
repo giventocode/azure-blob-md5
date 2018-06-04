@@ -39,14 +39,16 @@ func NewBlobHashFactory(pattern string, container string, accountName string, ac
 
 	factory := func() <-chan AsyncMD5 {
 		blobMD5 := make(chan AsyncMD5, 1000)
-		defer close(blobMD5)
-		for blobItem := range az.IterateBlobList(pattern, 1000) {
-			if blobItem.Err != nil {
-				log.Fatal(blobItem.Err)
+		go func() {
+			defer close(blobMD5)
+			for blobItem := range az.IterateBlobList(pattern, 1000) {
+				if blobItem.Err != nil {
+					log.Fatal(blobItem.Err)
+				}
+				blobReader := newBlobReader(blobItem.Blob.Name, *blobItem.Blob.Properties.ContentLength, *az)
+				blobMD5 <- *newAsyncMD5(blobReader)
 			}
-			blobReader := newBlobReader(blobItem.Blob.Name, *blobItem.Blob.Properties.ContentLength, *az)
-			blobMD5 <- *newAsyncMD5(blobReader)
-		}
+		}()
 		return blobMD5
 	}
 
