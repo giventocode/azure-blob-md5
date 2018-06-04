@@ -39,11 +39,11 @@ func (o *options) Init() {
 		printUsageDefaults("m", "set-blob-md5", "", setBlobMD5Msg)
 	}
 
-	stringVarAlias(&o.BlobNameOrPrefix, "b", "blob-name-or-prefix", "", blobNameMsg)
-	stringVarAlias(&o.ContainerName, "c", "container-name", "", containerNameMsg)
-	stringVarAlias(&o.AccountName, "a", "account-name", "", accountNameMsg)
-	stringVarAlias(&o.AccountKey, "k", "account-key", "", accountKeyMsg)
-	boolVarAlias(&o.SetBlobMD5, "m", "set-blob-md5", false, setBlobMD5Msg)
+	flag.StringVarP(&o.BlobNameOrPrefix, "blob-name-or-prefix", "b", "", blobNameMsg)
+	flag.StringVarP(&o.ContainerName, "container-name", "c", "", containerNameMsg)
+	flag.StringVarP(&o.AccountName, "account-name", "a", "", accountNameMsg)
+	flag.StringVarP(&o.AccountKey, "account-key", "k", "", accountKeyMsg)
+	flag.BoolVarP(&o.SetBlobMD5, "set-blob-md5", "m", false, setBlobMD5Msg)
 }
 
 func (o *options) Validate() error {
@@ -78,14 +78,4 @@ func printUsageDefaults(shortflag string, longflag string, defaultVal string, de
 		defaultMsg = fmt.Sprintf("\n\tDefault value: %v", defaultVal)
 	}
 	fmt.Fprintln(os.Stderr, fmt.Sprintf("-%v, --%v :\n\t%v%v", shortflag, longflag, description, defaultMsg))
-}
-
-func stringVarAlias(varPtr *string, shortflag string, longflag string, defaultVal string, description string) {
-	flag.StringVar(varPtr, shortflag, defaultVal, description)
-	flag.StringVar(varPtr, longflag, defaultVal, "")
-}
-
-func boolVarAlias(varPtr *bool, shortflag string, longflag string, defaultVal bool, description string) {
-	flag.BoolVar(varPtr, shortflag, defaultVal, description)
-	flag.BoolVar(varPtr, longflag, defaultVal, "")
 }

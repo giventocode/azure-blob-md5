@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-const defaultReadDepth int = 6
+const defaultReadDepth int = 10
 const defaultHashResultsDepth int = 6
 
 //ReadResponse response from a read operation
