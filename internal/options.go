@@ -23,7 +23,6 @@ var Options = &options{}
 const storageAccountKeyEnvVar = "ACCOUNT_KEY"
 const storageAccountNameEnvVar = "ACCOUNT_NAME"
 
-
 const (
 	blobNameMsg      = "Blob name (e.g. myblob.txt) or prefix."
 	containerNameMsg = "Container name (e.g. mycontainer)."
