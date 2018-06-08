@@ -2,8 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/giventocode/azure-blob-md5)](https://goreportcard.com/report/github.com/giventocode/azure-blob-md5)
 
-
-Computes the MD5 hash of blobs in Azure Blob Storage by reading data from blob storage asynchronously. If you specify more than one blob, the tool performs the calculation concurrently.
+Asynchronously computes the MD5 hash of blobs in Azure Blob Storage to maximize performance.  Azure blob MD5 computes the hash of several blobs concurrently. Local files are also supported so that you can use this functionality as a validation step for your data transfers to Azure blob storage.
 
 ![](azure-md5-blob.gif?raw=true)
 
