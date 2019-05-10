@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
-	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
+	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/giventocode/azure-blob-md5/internal"
 )
 
@@ -26,7 +26,11 @@ type azUtil struct {
 
 //newAzUtil TODO
 func newAzUtil(accountName string, accountKey string, container string, baseBlobURL string) (*azUtil, error) {
-	creds := azblob.NewSharedKeyCredential(accountName, accountKey)
+	creds, err := azblob.NewSharedKeyCredential(accountName, accountKey)
+
+	if err != nil {
+		return nil, err
+	}
 
 	pipeline := newPipeline(creds, azblob.PipelineOptions{
 		Retry: azblob.RetryOptions{
@@ -83,7 +87,7 @@ func (p *azUtil) downloadRange(blobName string, offset int64, count int64) ([]by
 
 //BlobItemInfo TODO
 type blobItemInfo struct {
-	blob azblob.Blob
+	blob azblob.BlobItem
 	err  error
 }
 
@@ -120,7 +124,7 @@ func (p *azUtil) iterateBlobList(prefix string, chanDepth int) <-chan blobItemIn
 				blobs <- blobItemInfo{err: err}
 				return
 			}
-			for _, blob := range response.Blobs.Blob {
+			for _, blob := range response.Segment.BlobItems {
 				blobs <- blobItemInfo{blob: blob}
 			}
 
